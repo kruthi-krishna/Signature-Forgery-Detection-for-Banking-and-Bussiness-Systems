@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signature Authenticity Prediction</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e6f7ff; /* Light blue background for a calm and elegant look */
+            color: #333333;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #005073;
+            margin-bottom: 20px;
+        }
+
+        .container {
+            border: 2px solid #cccccc;
+            border-radius: 15px;
+            padding: 30px;
+            display: inline-block;
+            background-color: #ffffff; /* White card-like background */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-size: 1.2em;
+            margin-bottom: 8px;
+        }
+
+        input[type="file"] {
+            display: block;
+            padding: 8px;
+            border: 1px solid #cccccc;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: #0073e6; /* Elegant blue */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #005bb5;
+        }
+
+        #imagePreview1, #imagePreview2 {
+            margin: 10px auto;
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #cccccc;
+            border-radius: 10px;
+            background-color: #f9f9f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #imagePreview1 img, #imagePreview2 img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        #output1, #output2 {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Signature Authenticity Prediction</h1>
+    <div class="container">
+        <form id="uploadForm">
+            <div class="input-group">
+                <label for="file1">Upload Image 1:</label>
+                <input type="file" id="file1" name="file1" accept="image/*" required>
+                <div id="imagePreview1">Image 1 Preview</div>
+            </div>
+            <div class="input-group">
+                <label for="file2">Upload Image 2:</label>
+                <input type="file" id="file2" name="file2" accept="image/*" required>
+                <div id="imagePreview2">Image 2 Preview</div>
+            </div>
+            <button type="submit">Predict</button>
+        </form>
+        <div id="output1"></div>
+        <div id="output2"></div>
+    </div>
+
+    <script>
+        // Handle Image Preview for File 1
+        document.getElementById("file1").addEventListener("change", function () {
+            const file = this.files[0];
+            const preview = document.getElementById("imagePreview1");
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Image 1 Preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = "Image 1 Preview";
+            }
+        });
+
+        // Handle Image Preview for File 2
+        document.getElementById("file2").addEventListener("change", function () {
+            const file = this.files[0];
+            const preview = document.getElementById("imagePreview2");
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.innerHTML = `<img src="${e.target.result}" alt="Image 2 Preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.innerHTML = "Image 2 Preview";
+            }
+        });
+
+        // Handle Form Submission and Predictions
+        document.getElementById("uploadForm").addEventListener("submit", async function (e) {
+            e.preventDefault();
+            const formData = new FormData();
+            const file1 = document.getElementById("file1").files[0];
+            const file2 = document.getElementById("file2").files[0];
+
+            if (!file1 || !file2) {
+                alert("Please upload both images!");
+                return;
+            }
+
+            formData.append("file1", file1);
+            formData.append("file2", file2);
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                const result = await response.json();
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    const predictions = result.predictions;
+                    document.getElementById("output1").textContent = `Prediction for Image 1 (${predictions[0].filename}): ${predictions[0].prediction}`;
+                    document.getElementById("output2").textContent = `Prediction for Image 2 (${predictions[1].filename}): ${predictions[1].prediction}`;
+                }
+            } catch (error) {
+                alert("An error occurred while processing the images.");
+            }
+        });
+    </script>
+</body>
+</html>
